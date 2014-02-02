@@ -1,0 +1,10 @@
+<?php
+// Add JS to make youtupbe videos fullscreen
+function nwgisconfig_preprocess_page(&$vars, $hook) {
+
+// Do we have a node?
+if (isset($vars['node'])) {
+	drupal_add_js(drupal_get_path('module', 'nwgisconfig').'/js/youtubefullscreen.js');
+}
+$vars['scripts'] = drupal_get_js();
+}

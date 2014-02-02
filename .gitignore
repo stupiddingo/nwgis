@@ -1,0 +1,19 @@
+# Ignore configuration files that may contain sensitive information.
+sites/*/settings*.php
+sites/*/dbsettings.inc
+
+# Ignore paths that contain user-generated content.
+sites/*/files
+sites/*/private
+private
+tmp
+
+# Ignore production files
+error_log
+links.txt
+maldet.txt
+script.sh
+shell.txt
+
+# Ignore IDE files
+.idea

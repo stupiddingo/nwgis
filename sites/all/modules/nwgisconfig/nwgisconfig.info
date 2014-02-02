@@ -1,0 +1,5 @@
+name = "NWGIS Configurations"
+description = "Provides a host of configuratins and customizations for NWGIS."
+dependencies[] = simplenews
+package = NWGIS
+core = 7.x
