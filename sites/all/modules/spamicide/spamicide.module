@@ -40,7 +40,7 @@ function spamicide_menu() {
     'title' => 'Set Spamicide form',
     'description' => "Add or edit form_id's to protect with Spamicide.",
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('spamicide_admin_adform_form', 5, TRUE),
+    'page arguments' => array('spamicide_admin_adform_form', 6, TRUE),
     'access arguments' => array('administer spamicide'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
@@ -48,7 +48,7 @@ function spamicide_menu() {
   $items['admin/config/people/spamicide/spamicide_form/delete/%'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('spamicide_delete_confirm', 5, TRUE),
+    'page arguments' => array('spamicide_delete_confirm', 6, TRUE),
     'access arguments' => array('administer spamicide'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
@@ -367,25 +367,25 @@ function spamicide_form_alter(&$form, &$form_state, $form_id) {
   module_load_include('inc', 'spamicide');
     $spamicide_field = _spamicide_get_field($form_id);
     if ($spamicide_field) {
-      drupal_add_css('public://' . variable_get('spamicide_dir', 'spamicide') . '/' . $spamicide_field . '.css');
+        //$sfile = 'public://' . variable_get('spamicide_dir', 'spamicide') . '/' . $spamicide_field . '.css';
         $spamicide_description = _spamicide_get_description();
         $spamicide_destination = drupal_get_destination();
         $form[$spamicide_field] = array(
-          '#title' => 'title',
+          '#title' => _spamicide_set_title($spamicide_field),
           '#type' => 'textfield',
           '#size' => 20,
           '#description' => check_plain($spamicide_description),
           //'#pre_render' => array('spamicide_pre_render'),
           '#pre_render' => array('spamicide_pre_render_place_spamicide'),
           '#name' => $spamicide_field,
-          '#post_render' => array('_spamicide_field_post_render')
+          '#post_render' => array('_spamicide_field_post_render'),
         );
+        $form['#attached']['css'][] = 'public://' . variable_get('spamicide_dir', 'spamicide') . '/' . $spamicide_field . '.css';
         $form['destination'] = array(
           '#type' => 'value',
           '#value' => $spamicide_destination['destination'],
         );
         $form['spamicide']['#element_validate'] = array('spamicide_validate');
-
     }
     elseif (user_access('administer spamicide') && variable_get('spamicide_administration_mode', TRUE) && arg(0) != 'admin') {
       $form['spamicide'] = array(

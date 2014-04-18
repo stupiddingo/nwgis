@@ -39,7 +39,7 @@ function _spamicide_get_field(&$form) {
  * @param string $op
  */
 function _spamicide_set_css_file($form_field, $op) {
-  $spam_path = file_default_scheme() . '://' . variable_get('spamicide_dir', 'spamicide');
+  $spam_path = 'public://' . variable_get('spamicide_dir', 'spamicide');
   $css_file = $spam_path . '/' . $form_field . '.css';
   if ($op == 'delete') {
     $file_check = db_query('SELECT DISTINCT(form_field) FROM {spamicide} WHERE form_field = :form_field', array(':form_field' => $form_field))->fetchCol();
@@ -98,3 +98,6 @@ function _spamicide_get_css_class($name) {
     return 'edit-' . str_replace('_', '-', $name) . '-wrapper';
 }
 
+function _spamicide_set_title($form_field) {
+  return str_replace('_', ' ', $form_field);
+}

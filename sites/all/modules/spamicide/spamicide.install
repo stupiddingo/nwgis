@@ -130,7 +130,7 @@ function spamicide_install() {
  */
 function spamicide_uninstall() {
   // Remove directory and generated files.
-  file_unmanaged_delete_recursive(file_default_scheme() . '://' . variable_get('spamicide_dir', 'spamicide'));
+  file_unmanaged_delete_recursive('public://' . variable_get('spamicide_dir', 'spamicide'));
   db_delete('variable')->condition('name', 'spamicide_%', 'LIKE')->execute();
   cache_clear_all('variables', 'cache');
 }
