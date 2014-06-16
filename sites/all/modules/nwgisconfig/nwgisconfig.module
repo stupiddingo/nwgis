@@ -1,10 +1,19 @@
 <?php
 // Add JS to make youtupbe videos fullscreen
 function nwgisconfig_preprocess_page(&$vars, $hook) {
-
-// Do we have a node?
-if (isset($vars['node'])) {
-	drupal_add_js(drupal_get_path('module', 'nwgisconfig').'/js/youtubefullscreen.js');
+  // Do we have a node?
+  if (isset($vars['node'])) {
+    drupal_add_js(drupal_get_path('module', 'nwgisconfig').'/js/youtubefullscreen.js');
+  }
+  $vars['scripts'] = drupal_get_js();
 }
-$vars['scripts'] = drupal_get_js();
+
+function nwgisconfig_form_alter(&$form, $form_state, $form_id)  {
+  if ($form_id == 'session_node_form') {
+    // Change title.
+    drupal_set_title(t('Present at Northwest GIS'));
+
+    //Add a title field description
+    $form['title']['#description'] = t('Talk or poster title, please limit to ten words or less.');
+  }
 }
