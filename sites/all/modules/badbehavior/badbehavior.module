@@ -159,6 +159,8 @@ function badbehavior_db_errortrap($errno, $string) {
  */
 function bb2_db_query($query) {
   set_error_handler('badbehavior_db_errortrap');
+  // Remove security-sensitive data
+  $query = badbehavior_strip_passwords($query);
   $result = db_query($query);
   restore_error_handler();
   if ($result == FALSE) {
@@ -261,4 +263,40 @@ function badbehavior_page_build(&$page) {
         '" rel="nofollow">' . variable_get('badbehavior_httpbl_quicklinktext', 'Customize This') . '</a></span>' . "\n"
     );
   }
+}
+
+/**
+ * Strip out reporting of values from forms containing sensitive data
+ * Looking for query like this:
+ * INSERT INTO `{bad_behavior_log}` (....,`request_entity`,...) VALUES (...,'request_entity_post_values',...)
+ * where request_entity_post_values contains specific strings.
+ * The only string coded for by default is 'form_iduser_login' which is found in login form
+ * post data (after escaping).
+ *
+ * @param string $query
+ */
+function badbehavior_strip_passwords($query) {
+  if (preg_match('/INSERT INTO (.*)`request_entity`/', $query)) {
+    $prohibit = variable_get('badbehavior_hide_post_strings', array('form_iduser_login'));
+    $matches = array();
+    if (preg_match('/INSERT INTO (.*) \((.*)\) VALUES \((.*)\)/', $query, $matches)) {
+      if (trim($matches[1]) == '`{bad_behavior_log}`') {
+        $fields = explode(',', $matches[2]);
+        $values = explode(',', $matches[3]);
+        foreach ($fields as $i => $f) {
+          if (trim($f) == '`request_entity`') {
+            foreach ($prohibit as $txt) {
+              if (strstr($values[$i], $txt) !== false) {
+                $values[$i] = "'(hidden)'";
+                break;
+              }
+            }
+          }
+        }
+        // reconstruct the query
+        $query = 'INSERT INTO '.$matches[1].' ('.join(',', $fields).') VALUES ('.join(',', $values).')';
+      }
+    }
+  }
+  return $query;
 }
