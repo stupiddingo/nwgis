@@ -4,19 +4,7 @@ sites/*/settings*.php
 # Ignore paths that contain user-generated content.
 sites/*/files
 sites/*/private
+
+# Ignore additional files
+.idea
 private
-tmp
-
-# Ignore windows thumbnails
-Thumbs.db
-
-# Ignore IDE files
-.idea/
-
-#Ignore Hosting files
-.ftpquota
-error_log
-links.txt
-maldet.txt
-script.sh
-shell.txt
