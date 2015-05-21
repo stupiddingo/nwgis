@@ -18,30 +18,23 @@ function og_menu_overview_page($group_type, $gid) {
   // Set the breadcrumb.
   og_set_breadcrumb($group_type, $gid, array(l(t('Group'), "$group_type/$gid/group")));
 
-  // @todo Replace by D7 database independent functions.
-  $result = db_query("
-    SELECT om.gid, om.menu_name as name, m.title as title, m.description as description FROM {og_menu} om
-    LEFT JOIN {menu_custom} m
-    ON om.menu_name = m.menu_name
-    WHERE om.gid = :gid
-    ORDER BY title", array(':gid' => $gid));
   $header = array(t('Title'), array('data' => t('Operations'), 'colspan' => '3'));
   $rows = array();
-  foreach ($result as $menu) {
+  foreach (og_menu_get_menus($group_type, $gid) as $menu) {
     $row = array(
       theme('menu_admin_overview', array(
         'title' => $menu->title,
-        'name' => $menu->name,
+        'name' => $menu->menu_name,
         'description' => $menu->description,
       )),
     );
-    $row[] = array('data' => l(t('list links'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->name));
-    $row[] = array('data' => l(t('edit menu'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->name . '/edit'));
-    $row[] = array('data' => l(t('add link'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->name . '/add'));
+    $row[] = array('data' => l(t('list links'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->menu_name));
+    $row[] = array('data' => l(t('edit menu'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->menu_name . '/edit'));
+    $row[] = array('data' => l(t('add link'), 'group/' . $group_type . '/' . $gid . '/admin/menus/' . $menu->menu_name . '/add'));
     $rows[] = $row;
   }
 
-  if ($result->rowCount() == 0) {
+  if (empty($rows)) {
     return t('There are currently no menus.');
   }
   else {
@@ -240,7 +233,7 @@ function og_menu_edit_item_form($form, &$form_state, $type, $group_type, $gid, $
   if (module_exists('mpac')) {
      mpac_form_menu_edit_item_alter($form, $form_state);
   }
-  
+
   return $form;
 }
 

@@ -5,7 +5,8 @@
 #zone-content a:hover { text-decoration: underline; color: #56B4EF;}
 #zone-branding ul li { display: inline; list-style: none; padding:0; margin: 0; }
 #block-system-user-menu, #block-block-1, #search-block-form { float: right; padding-top:2px; }
-h1.site-name, h2.site-name { font-size: 26px; font-weight: bold; text-decoration: none; margin-top: 3px; padding: 0; }
+h1.site-name, h2.site-name { font-size: 32px; font-weight: bold; text-decoration: none; margin-top: 3px; padding: 0; }
+img#logo { height: 44px; width: 44px; padding-right: 8px; padding-top: 2px; }
 #region-branding { min-height: 28px; padding-bottom: 2px; }
 #zone-branding-wrapper, #zone-menu-wrapper { background-color: #210C02; }
 #zone-menu-wrapper { border-bottom: 3px solid #52250f; }
@@ -51,3 +52,11 @@ body.node-type-conference-subsite h1#page-title, .breadcrumb { display: none; }
 #block-og-menu-og-single-menu-block .menu a:hover, #zone-content a.button:hover, #zone-content a.button:active { color: #fff; background-color:#56B4EF;  }
 .node-links ul li a { float: none; display: inline-block; }
 #region-sidebar-first section, #region-sidebar-second section { padding-bottom: 20px; }
+@media (max-width: 801px) {
+  #region-user-second { display: none; }
+  #region-user-first { width: 100%; }
+  h1.site-name { font-size: 26px; }
+}
+@media (max-width: 480px) {
+  img#logo { display: none;  }
+}

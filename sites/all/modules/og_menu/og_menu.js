@@ -30,7 +30,7 @@ Drupal.ogMenu.bindEvents = function() {
     if (value.visibility === true) {
       selector = Drupal.ogMenu.buildSelector(index, value.normal, value.cardinality, value.normal_selector);
       Drupal.ogMenu.bindEvent(value.normal, selector);
-      if (Drupal.settings.ogMenu.administer_group === true) {
+      if (Drupal.settings.ogMenu.administer_group === true && value.admin !== undefined) {
         selector = Drupal.ogMenu.buildSelector(index, value.admin, value.cardinality, value.admin_selector);
         Drupal.ogMenu.bindEvent(value.admin, selector);
       }
@@ -74,7 +74,7 @@ Drupal.ogMenu.getSelectors = function() {
   var selectors = [];
   $.each(fields, function (index, value) {
     selectors.push(Drupal.ogMenu.buildSelector(index, value.normal, value.cardinality, value.normal_selector));
-    if (Drupal.settings.ogMenu.administer_group === true) {
+    if (Drupal.settings.ogMenu.administer_group === true  && value.admin !== undefined) {
       selectors.push(Drupal.ogMenu.buildSelector(index, value.admin, value.cardinality, value.admin_selector));
     }
   });
@@ -117,19 +117,32 @@ Drupal.ogMenu.getGroupRefVal = function(name, type, cardinality, base_selector) 
     else { // plural values, checkbox elements.
       selector = 'input[type="checkbox"][name^="' + base_selector + '"]:checked';
       $(selector).each(function(i) {
-        $.merge(val, $(this).val());
+        val.push($(this).val());
       });
     }
   }
   else if (type == 'options_select') {  // Handle Selects
     selector = 'select[name^="' + base_selector + '"]';
-    val.push($(selector).val());
+    if (cardinality == 1) {
+      val.push($(selector).val());
+    }
+    else {
+      $(selector).each(function(i) {
+        if ($(this).val() !== null) {
+          $.merge(val, $(this).val());
+        }
+      });
+    }
   }
   else if (type == 'entityreference_autocomplete') { // Handle Autocompletes
     selector = 'input[type="text"][name^="' + base_selector + '"].form-autocomplete';
     $(selector).each(function(i) {
       var str = $(this).val();
-      val.push(str.substring(str.lastIndexOf('(') + 1, str.lastIndexOf(')')));
+      // @TODO Replace with regex for multiple items in Autocomplete (Tags style)?
+      str = str.substring(str.lastIndexOf('(') + 1, str.lastIndexOf(')'));
+      if (str !== '') {
+        val.push(str);
+      }
     });
   }
   return val;
@@ -145,11 +158,11 @@ Drupal.ogMenu.setSelected = function() {
     // When dealing with visible fields, get the value from DOM.
     if (value.visibility === true) {
       Drupal.ogMenu.addSelected(
-          Drupal.ogMenu.getGroupRefVal(index, value.normal, value.cardinality, value.normal_selector)
+        Drupal.ogMenu.getGroupRefVal(index, value.normal, value.cardinality, value.normal_selector)
       );
-      if (Drupal.settings.ogMenu.administer_group === true) {
+      if (Drupal.settings.ogMenu.administer_group === true && value.admin !== undefined) {
         Drupal.ogMenu.addSelected(
-            Drupal.ogMenu.getGroupRefVal(index, value.admin, value.cardinality, value.admin_selector)
+          Drupal.ogMenu.getGroupRefVal(index, value.admin, value.cardinality, value.admin_selector)
         );
       }
     }
