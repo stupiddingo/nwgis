@@ -1,13 +1,13 @@
 # Ignore configuration files that may contain sensitive information.
-docroot/sites/*/settings*.php
+sites/*/settings*.php
 
 # Ignore paths that contain user-generated content.
-docroot/sites/*/files
-docroot/sites/*/private
+sites/*/files
+sites/*/private
 
 # Ignore additional files
 .idea
-docroot/private
-docroot/tmp
+private
+tmp
 .ftpquota
 maldet.txt
