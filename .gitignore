@@ -7,7 +7,5 @@ sites/*/private
 
 # Ignore additional files
 .idea
-private
-tmp
 .ftpquota
 maldet.txt
