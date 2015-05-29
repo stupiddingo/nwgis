@@ -9,3 +9,7 @@ sites/*/private
 .idea
 .ftpquota
 maldet.txt
+
+# Ignore devel files
+sites/all/modules/devel
+sites/all/modules/contrib/devel
