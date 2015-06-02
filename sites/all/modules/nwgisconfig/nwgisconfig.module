@@ -1,13 +1,19 @@
 <?php
-// Add JS to make youtupbe videos fullscreen
+/**
+ * Implements hook_preprocess_page().
+ */
 function nwgisconfig_preprocess_page(&$vars, $hook) {
   // Do we have a node?
   if (isset($vars['node'])) {
+    // Add js to make videos full screen. TODO replace with fitvids module.
     drupal_add_js(drupal_get_path('module', 'nwgisconfig').'/js/youtubefullscreen.js');
   }
   $vars['scripts'] = drupal_get_js();
 }
 
+/**
+ * Implements hook_form_alter().
+ */
 function nwgisconfig_form_alter(&$form, $form_state, $form_id)  {
   if ($form_id == 'session_node_form') {
     // Change title.
@@ -16,4 +22,65 @@ function nwgisconfig_form_alter(&$form, $form_state, $form_id)  {
     //Add a title field description
     $form['title']['#description'] = t('Talk or poster title, please limit to ten words or less.');
   }
+}
+
+/**
+ * Implements hook_commerce_checkout_complete().
+ * Log purchases of licenses to the membership table.
+ * TODO when other purchases available log those that impact membership as well.
+ */
+function nwgisconfig_commerce_checkout_complete($order) {
+  $ow = entity_metadata_wrapper('commerce_order', $order);
+  foreach ($ow->commerce_line_items as $line_item) {
+    $sku = $line_item->commerce_product->sku->value();
+    if ($sku == 'member2015') {
+      $uid = $ow->uid->value();
+      $user = user_load($uid);
+      $last = $first = $organization = $position = $address1 = $address2 = $city = $state = $postal = $country = $phone = null;
+      if (!empty($user->field_last_name)) {
+        $last = $user->field_last_name['und'][0]['value'];
+      }
+      if (!empty($user->field_first_name)) {
+        $first = $user->field_first_name['und'][0]['value'];
+      }
+      if (!empty($user->field_organization)) {
+        $organization = $user->field_organization['und'][0]['value'];
+      }
+      if (!empty($user->field_job_title)) {
+        $position = $user->field_job_title['und'][0]['value'];
+      }
+      if (!empty($user->field_postal_address)) {
+        $address1 = $user->field_postal_address['und'][0]['thoroughfare'];
+        $address2 = $user->field_postal_address['und'][0]['premise'];
+        $city = $user->field_postal_address['und'][0]['locality'];
+        $state = $user->field_postal_address['und'][0]['administrative_area'];
+        $postal = $user->field_postal_address['und'][0]['postal_code'];
+        $country = $user->field_postal_address['und'][0]['country'];
+      }
+      if (!empty($user->field_phone_number)) {
+        $phone = $user->field_phone_number['und'][0]['value'];
+      }
+      $record = array(
+        'uid' => $uid,
+        'last' => $last,
+        'first' => $first,
+        'email' => $user->mail,
+        'organization' => $organization,
+        'member' => 2015,
+        'conference' => null,
+        'product' => '2015 NWGIS Annual Membership',
+        'designation' => null,
+        'position' => $position,
+        'address1' => $address1,
+        'address2' => $address2,
+        'city' => $city,
+        'state' => $state,
+        'postal' => $postal,
+        'country' => $country,
+        'phone' => $phone
+      );
+      drupal_write_record('nwgis_membership', $record);
+    }
+  }
+
 }
