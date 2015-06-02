@@ -10,3 +10,9 @@
  * for your subtheme grows. Please read the README.txt in the /preprocess and /process subfolders
  * for more information on this topic.
  */
+function nwgis_preprocess_user_profile(&$variables) {
+  if (isset($variables['user_profile']['summary']['member_for']['#title'])){
+    $variables['user_profile']['summary']['member_for']['#title'] = 'Profile created';
+  }
+
+}
