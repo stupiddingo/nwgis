@@ -1,1 +1,1 @@
-<?php     drupal_add_css('http://fonts.googleapis.com/css?family=Francois+One|Open+Sans', array('type' => 'external'));
+<?php     drupal_add_css('https://fonts.googleapis.com/css?family=Francois+One|Open+Sans', array('type' => 'external'));
