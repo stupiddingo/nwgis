@@ -82,5 +82,30 @@ function nwgisconfig_commerce_checkout_complete($order) {
       drupal_write_record('nwgis_membership', $record);
     }
   }
+}
 
+/**
+ * Implements hook_user_insert().
+ */
+function nwgisconfig_user_insert(&$edit, $account, $category) {
+  // Search past attendance for this email, if found tie to account.
+  $mail_updated = db_update('nwgis_membership')
+    ->fields(array(
+      'uid' => $account->uid
+    ))
+    ->condition('email', $account->mail)
+    ->condition('uid', 0)
+    ->execute();
+  if($mail_updated > 0) {
+    $msg = format_plural($mail_updated, '1 conference registration', '@count conference registrations').' located for your email address and attached to your profile.';
+    drupal_set_message($msg, 'status');
+    watchdog('nwgisconfig', 'Past attendances for user %account identified by %email', array('%account' => $account->uid, '%email' => $account->mail), WATCHDOG_NOTICE, $link = NULL);
+  }
+  // If membership is active this year, add to member role.
+  $max_year = db_query("SELECT MAX(member) from {nwgis_membership} WHERE uid = :uid LIMIT 1", array(":uid" => $account->uid))->fetchField();
+  if($max_year == date("Y")) {
+    dpm($account);
+    $account->roles[5] = 'member';
+    dpm($account);
+  }
 }
