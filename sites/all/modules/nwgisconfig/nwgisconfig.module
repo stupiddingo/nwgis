@@ -33,7 +33,7 @@ function nwgisconfig_commerce_checkout_complete($order) {
   $ow = entity_metadata_wrapper('commerce_order', $order);
   foreach ($ow->commerce_line_items as $line_item) {
     $sku = $line_item->commerce_product->sku->value();
-    if ($sku == 'member2015') {
+    if ($sku == 'member2016') {
       $uid = $ow->uid->value();
       $user = user_load($uid);
       $last = $first = $organization = $position = $address1 = $address2 = $city = $state = $postal = $country = $phone = null;
@@ -66,9 +66,9 @@ function nwgisconfig_commerce_checkout_complete($order) {
         'first' => $first,
         'email' => $user->mail,
         'organization' => $organization,
-        'member' => 2015,
+        'member' => 2016,
         'conference' => null,
-        'product' => '2015 NWGIS Annual Membership',
+        'product' => '2016 NWGIS Annual Membership',
         'designation' => null,
         'position' => $position,
         'address1' => $address1,
