@@ -17,3 +17,4 @@ After a NWGIS Conference Completes this maintenance is needed
 "id","uid","last","first","email","organization","member","conference","product","designation","position","address1","address2","city","state","postal","country","phone"
 ,1044,"Washington","George","george@america.gov","Continental Army",2016,"2015 URISA GIS-Pro/NWGIS Conference - Spokane, WA","2015 Conference Registration",,,"123 Main St",,"Washington","WA","98000","US",
 ```
+- Use https://nwgis.org/up to add and remove users from the member role based on product imports and annual expirations.  Expirations should probably wait until Jan. 1.
