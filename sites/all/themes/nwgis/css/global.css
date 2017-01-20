@@ -393,3 +393,13 @@ a.button:hover, button:hover, a.btn:hover, .node-links ul li a:hover, .comment-l
         display: none;
     }
 }
+
+@media print {
+    #region-page-top, #region-page-bottom, #zone-menu-wrapper, #section-footer, #region-sidebar-second, #region-sidebar-first, #region-postscript-first, #region-postscript-second, #region-postscript-third, #region-user-second {
+        display: none;
+    }
+    #zone-branding-wrapper, #zone-postscript-wrapper, #zone-branding a {
+        background: transparent;
+        color: #333;
+    }
+}
