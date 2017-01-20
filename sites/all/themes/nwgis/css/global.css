@@ -402,4 +402,8 @@ a.button:hover, button:hover, a.btn:hover, .node-links ul li a:hover, .comment-l
         background: transparent;
         color: #333;
     }
+    #region-content {
+        width: 100%;
+    }
+
 }
