@@ -127,7 +127,7 @@ h2.node-title {
 }
 
 .submitted, .when {
-    color: #BBB;
+    color: #999;
 }
 
 #zone-content .node-teaser .field-name-field-image {
@@ -140,15 +140,19 @@ h2.node-title {
     margin: 0;
 }
 
-.view-display-id-block_1 h3 {
+.conference-site {
+    text-align: center;
+}
+
+.view-display-id-block_1 h3, .conference-site a {
     margin: 2px 0;
     padding-bottom: 0;
-    border-bottom: 1px solid #BBB;
+    border-bottom: 1px solid #999;
 }
 
 #zone-content h3 {
     margin: 14px 0 2px 0;
-    color: #BBB;
+    color: #999;
 }
 
 .view-display-id-block_1 .views-row {
