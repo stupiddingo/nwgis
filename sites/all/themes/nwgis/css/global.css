@@ -8,7 +8,7 @@
     padding-top: 10px;
 }
 
-#zone-content a, #zone-content a:visited, #zone-content a:link {
+a, a:visited, a:link {
     text-decoration: none;
 }
 
