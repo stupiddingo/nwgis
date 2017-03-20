@@ -8,8 +8,7 @@
     padding-top: 10px;
 }
 
-#zone-content a {
-    /*color: #0275d8;*/
+#zone-content a, #zone-content a:visited {
     text-decoration: none;
 }
 
