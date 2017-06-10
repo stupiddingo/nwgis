@@ -21,7 +21,16 @@ function nwgisconfig_form_alter(&$form, $form_state, $form_id)  {
 
     //Add a title field description
     $form['title']['#description'] = t('Talk or poster title, please limit to ten words or less.');
+
+    // Load session behavior
+    $form['#after_build'][] = '_session_after_build';
   }
+}
+
+function _session_after_build($form, &$form_state) {
+  // If this is the session form we need to load session behavior.
+  drupal_add_js(drupal_get_path('module', 'nwgisconfig').'/js/session.js');
+  return $form;
 }
 
 /**
