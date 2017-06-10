@@ -10,8 +10,8 @@
       $("#edit-field-session-track").hide();
       $("#edit-field-session-track input.form-radio").prop("checked", false);
     }
-    $("#edit-field-session-type-und-105").click(function () {
-      if ($(this).is(":checked")) {
+    $("#edit-field-session-type input.form-radio").click(function () {
+      if ($("#edit-field-session-type-und-105").is(":checked")) {
         $("#edit-field-session-track").show("slow");
       } else {
         $("#edit-field-session-track").hide("slow");
