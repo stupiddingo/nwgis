@@ -9,10 +9,6 @@
  * @see http://www.pelagodesign.com/sidecar/emogrifier/
  */
 
-if (!function_exists('url_to_path')) {
-  require_once(dirname(__FILE__) . '/url_to_path.inc');
-}
-
 /**
  * Implements hook_help().
  */
@@ -82,156 +78,77 @@ function _emogrifier_process($text, $filter, $format, $langcode, $cache, $cache_
     );
     return $text;
   }
-  $styles = array();
-  $urls = array();
-  // Match linked stylesheets.
-  if (preg_match_all('#<link[^>]*>\s*#si', $text, $links)) {
-    foreach ($links[0] as $link) {
-      if ( preg_match('#\s+type\s*=\s*(["\']?)text/css\1#si', $link)
-        && preg_match('#\s+rel\s*=\s*(["\']?)stylesheet\1#si', $link)
-        && preg_match('#\s+media\s*=\s*(["\']?)all\1#si', $link)
-        && preg_match('#\s+href\s*=\s*(["\']?)([^?]*?)(\?.*?)?\1#si', $link, $match) ) {
-        $urls = array_merge($urls, array_slice($match, 2, 1));
-      }
-      $text = str_replace($link, '', $text);
-    }
-  }
-  // Match style blocks, possibly with @imports.
-  if (
-    preg_match_all(
-      '#(<style[^>]*>)\s*(<!--)?\s*(.*?)\s*(-->)?\s*</style>\s*#si',
-      $text, $blocks
-    )
-  ) {
-    foreach ($blocks[1] as $block => $tag) {
-      if ( preg_match('#\s+type\s*=\s*(["\']?)text/css\1#si', $tag)
-        && preg_match('#\s+media\s*=\s*(["\']?)all\1#si', $tag) ) {
-        if (
-          preg_match_all('#@import\s+url\s*\(\s*(["\']?)([^?]*)(\?.*?)?\1\s*\)\s*;#si',
-            $blocks[3][$block], $imports
-          )
-        ) {
-          $urls = array_merge($urls, $imports[2]);
-          $rules = trim(str_replace($imports[0], '', $blocks[3][$block]));
-          if (!empty($rules)) {
-            $styles[] = $rules;
-          }
-        }
+
+  $emogrifier = new \Pelago\Emogrifier($text);
+
+  $css = '';
+
+  // Add external css from settings, add it to $urls to be parsed.
+  if (isset($filter->settings['external_css'])
+    && !empty($filter->settings['external_css'])) {
+    $stylesheets = explode('\n', str_replace('\r', '', $filter->settings['external_css']));
+    foreach ($stylesheets as $stylesheet) {
+      // Check if file exists to avoid warning.
+      if (file_exists($stylesheet)) {
+        $css = file_get_contents($stylesheet);
       }
     }
-    $text = str_replace($blocks[0], '', $text);
   }
-  foreach ($urls as $url) {
-    if ( ($path = url_to_realpath(check_url($url)))
-      && (file_exists($path))
-      && ($style = trim(file_get_contents($path)))
-    ) {
-      $styles[] = $style;
+  // Add inline css from settings, add it to $styles to be parsed.
+  if (isset($filter->settings['inline_css'])
+    && !empty($filter->settings['inline_css'])) {
+    $css .= $filter->settings['inline_css'];
+  }
+
+  if (!empty($css)) {
+    @$emogrifier->setCss($css);
+  }
+
+  if (isset($filter->settings['disable_styles_block_parsing'])
+    && !empty($filter->settings['disable_styles_block_parsing'])) {
+    @$emogrifier->disableStyleBlocksParsing();
+  }
+  if (isset($filter->settings['disable_inline_styles_parsing'])
+    && !empty($filter->settings['disable_inline_styles_parsing'])) {
+    @$emogrifier->disableInlineStyleAttributesParsing();
+  }
+  if (isset($filter->settings['disable_invisible_node_removal'])
+    && !empty($filter->settings['disable_invisible_node_removal'])) {
+    @$emogrifier->disableInvisibleNodeRemoval();
+  }
+  if (isset($filter->settings['enable_css_to_html_mapping'])
+    && !empty($filter->settings['enable_css_to_html_mapping'])) {
+    @$emogrifier->enableCssToHtmlMapping();
+  }
+  if (isset($filter->settings['add_allowed_media_type'])
+    && !empty($filter->settings['add_allowed_media_type'])) {
+    $media_types = explode(',', $filter->settings['add_allowed_media_type']);
+    foreach ($media_types as $media_type) {
+      @$emogrifier->addAllowedMediaType(trim($media_type));
     }
   }
-  // Strip comments and unecessary whitespace from the collected style rules.
-  $styles = preg_replace(
-    array('/[[:space:]]+/s', '#/\*.*?\*/#', '/ +/'), ' ', $styles
-  );
-  // Remove quote marks around urls.
-  $styles = preg_replace('/url[[:space:]]*\([[:space:]]*(["\'])(.*?)\1[[:space:]]*\)/mis', 'url(\2)', $styles);
-  $text = preg_replace('/url[[:space:]]*\([[:space:]]*(["\'])(.*?)\1[[:space:]]*\)/mis', 'url(\2)', $text);
-  // Emogrify can't handle several CSS rules on one line,
-  // so insert a newline character after each closing bracket.
-  $styles = preg_replace('/}\s*/', "}\n", implode("\n", $styles));
-  // Strip unwanted container tags.
-  $text = preg_replace(
-    '#<(applet|audio|canvas|embed|frameset|head|iframe|object|ruby|script|style|title|video)[^[:alnum:]].*?</\1\s*>\s*#si',
-    '', '<head>' . $text
-  );
-  // Replace or remove other tags.
-  $text = preg_replace_callback(
-    '#(<(/?))([!\[[:alnum:]\]]{2,12})([^>]*>)#s', '_emogrifier_replace_tag', $text
-  );
-  // Strip unwanted container tags replaced by comments.
-  $text = preg_replace('#<!--.*?-->\s*#si', '', $text);
-  // Load the html text and style rules.
-  $emogrifier = new Emogrifier('<html><body>' . $text . '</body></html>', $styles);
-  // Apply the rules to create inline style attributes.
-  $text = @$emogrifier->emogrify();
-  // Extract body portion.
-  $text = preg_replace('#.*<body>(.*)</body>.*#Usi', '\1', $text);
-  // Strip unwanted attributes.
-  $text = preg_replace(
-    array(
-      '#(<[^>]*?)\s*class\s*=\s*(["\']).*?\2#si',
-      '#(<[^>]*?)\s*id\s*=\s*(["\']).*?\2#si',
-    ), '\1', $text);
-  // @todo Strip any whitespace outside of <pre> or <code> tags?
-  return $text;
-}
-
-function _emogrifier_replace_tag(array $matches) {
-  static $allowed;
-  if (!isset($allowed)) {
-    $allowed = &emogrifier_allowed_tags();
+  if (isset($filter->settings['remove_allowed_media_type'])
+    && !empty($filter->settings['remove_allowed_media_type'])) {
+    foreach ($filter->settings['remove_allowed_media_type'] as $media_type) {
+      @$emogrifier->removeAllowedMediaType($media_type);
+    }
   }
-  return isset( $allowed[ $name = strtolower($matches[3]) ] )
-    ? ( is_array($tag = $allowed[$name])
-      ? $tag[ (bool)$matches[2] ] // Allowed start/end tag replacements.
-      : ( $matches[1] . $tag . $matches[4] ) // Both tag replacements.
-    ) : '' ; // All unlisted tags are removed, but their contents remain.
-}
-
-function &emogrifier_allowed_tags() {
-  $tags = drupal_static(__FUNCTION__);
-  if (!isset($tags)) {
-    $tags = variable_get(
-      'emogrifier_allowed_tags',
-      array_combine(
-        // Safe tags allowed in both HTML4 and XHTML are unchanged.
-        $a = explode(
-          ',', 'a,abbr,address,area,b,bdo,blockquote,br,button,caption,cite,'
-          . 'code,col,colgroup,dd,del,dfn,div,dl,dt,em,fieldset,font,form,h1,h2,'
-          . 'h3,h4,h5,h6,hr,i,img,input,ins,kbd,label,legend,li,map,ol,optgroup,'
-          . 'option,p,pre,q,s,samp,select,span,strike,strong,sub,sup,table,'
-          . 'tbody,td,textarea,tfoot,th,thead,tr,tt,u,ul,var,'
-        ), $a
-      ) + array_fill_keys(
-        // Deprecated/unsupported inline tags replaced by 'span'.
-        explode(',', 'acronym,meter,output,progress,time'), 'span'
-      ) + array_fill_keys(
-        // Deprecated/unsupported container tags replaced by 'div'.
-        explode(
-          ',', 'article,aside,body,details,figcaption,figure,footer,header,'
-          . 'hgroup,nav,section,summary'
-        ), 'div'
-      ) + array(
-        // Other tag replacements.
-        'big' => array(
-          '<span style="font-size: 120%">', '</span>'
-        ),
-        'center' => array(
-          '<div style="text-align: center">', '</div>'
-        ),
-        'command' => 'button',
-        'datalist' => 'select',
-        'dir' => 'ul',
-        'mark' => array(
-          '<span style="background-color: yellow; color: black">', '</span>'
-        ),
-        'menu' => 'ul',
-        's' => array(
-          '<span style="text-decoration: line-through">', '</span>'
-        ),
-        'small' => array(
-          '<span style="font-size: 80%">', '</span>'
-        ),
-        'strike' => array(
-          '<span style="text-decoration: line-through">', '</span>'
-        ),
-        'wbr' => array('&shy;', ''),
-        'xmp' => 'pre',
-        )
-      // All other tags are removed, while their content remains.
-    );
+  if (isset($filter->settings['add_excluded_selector'])
+    && !empty($filter->settings['add_excluded_selector'])) {
+    $excluded_selectors = explode(',', $filter->settings['add_excluded_selector']);
+    foreach ($excluded_selectors as $excluded_selector) {
+      @$emogrifier->addExcludedSelector(trim($excluded_selector));
+    }
   }
-  return $tags;
+
+  $content = @$emogrifier->emogrify();
+  // Emogrifier has a problem with [ and ] inside quotes.
+  // This stops tokens inside of href and src attributes from being processed.
+  // See https://github.com/jjriv/emogrifier/issues/98.
+  $content = str_replace('%5B', '[', $content);
+  $content = str_replace('%5D', ']', $content);
+
+  return $content;
 }
 
 /**
@@ -239,11 +156,11 @@ function &emogrifier_allowed_tags() {
  */
 function _emogrifier_available() {
   // Maybe something loaded the class without telling libraries API.
-  if (class_exists('Emogrifier')) {
+  if (class_exists('\Pelago\Emogrifier')) {
     return TRUE;
   }
-  @include_once libraries_get_path('emogrifier') . '/emogrifier.php';
-  return class_exists('Emogrifier');
+  @include_once libraries_get_path('emogrifier') . '/Classes/Emogrifier.php';
+  return class_exists('\Pelago\Emogrifier');
 }
 
 /**
@@ -251,7 +168,84 @@ function _emogrifier_available() {
  * @see emogrifier_filter_info()
  */
 function _emogrifier_filter_settings($form, &$form_state, $filter, $format, $defaults, $filters) {
-  return array();
+  $filter->settings += $defaults;
+
+  // Do this to show error if files for external CSS not found.
+  if (empty($form_state['input'])) {
+    $external_css = $filter->settings['external_css'];
+    if (isset($external_css) && !empty($external_css)) {
+      $stylesheets = explode('\n', str_replace('\r', '', $external_css));
+      foreach ($stylesheets as $stylesheet) {
+        if (!file_exists($stylesheet)) {
+          drupal_set_message(t('File @stylesheet does not exist.', array('@stylesheet' => $stylesheet)), 'error', FALSE);
+        }
+      }
+    }
+  }
+
+  return array(
+    'disable_styles_block_parsing' => array(
+      '#type' => 'checkbox',
+      '#title' => 'Disable inline styles parsing',
+      '#description' => t('By default, Emogrifier will grab all &lt;style&gt; blocks in the HTML and will apply the CSS styles as inline "style" attributes to the HTML. The &lt;style&gt; blocks will then be removed from the HTML. If you want to disable this functionality so that Emogrifier leaves these &lt;style&gt; blocks in the HTML and does not parse them, you should use this option. If you use this option, the contents of the &lt;style&gt; blocks will not be applied as inline styles and any CSS you want Emogrifier to use must be passed using the external css and inline css options below.'),
+      '#default_value' => isset($filter->settings['disable_styles_block_parsing']) ? $filter->settings['disable_styles_block_parsing'] : FALSE,
+      '#checked' => isset($filter->settings['disable_styles_block_parsing']) ? $filter->settings['disable_styles_block_parsing'] : FALSE,
+    ),
+    'disable_inline_styles_parsing' => array(
+      '#type' => 'checkbox',
+      '#title' => 'Disable inline styles parsing',
+      '#description' => t('By default, Emogrifier preserves all of the "style" attributes on tags in the HTML you pass to it. However if you want to discard all existing inline styles in the HTML before the CSS is applied, you should use this option.'),
+      '#default_value' => isset($filter->settings['disable_inline_styles_parsing']) ? $filter->settings['disable_inline_styles_parsing'] : FALSE,
+      '#checked' => isset($filter->settings['disable_inline_styles_parsing']) ? $filter->settings['disable_inline_styles_parsing'] : FALSE,
+    ),
+    'disable_invisible_node_removal' => array(
+      '#type' => 'checkbox',
+      '#title' => 'Disable invisible node removal',
+      '#description' => t('By default, Emogrifier removes elements from the DOM that have the style attribute display: none;. If you would like to keep invisible elements in the DOM, use this option.'),
+      '#default_value' => isset($filter->settings['disable_invisible_node_removal']) ? $filter->settings['disable_invisible_node_removal'] : FALSE,
+      '#checked' => isset($filter->settings['disable_invisible_node_removal']) ? $filter->settings['disable_invisible_node_removal'] : FALSE,
+    ),
+    'enable_css_to_html_mapping' => array(
+      '#type' => 'checkbox',
+      '#title' => 'Enable CSS to HTML Mapping',
+      '#description' => t('Some email clients don\'t support CSS well, even if inline and prefer HTML attributes. This function allows you to put properties such as height, width, background color and font color in your CSS while the transformed content will have all the available HTML tags set.'),
+      '#default_value' => isset($filter->settings['enable_css_to_html_mapping']) ? $filter->settings['enable_css_to_html_mapping'] : FALSE,
+      '#checked' => isset($filter->settings['enable_css_to_html_mapping']) ? $filter->settings['enable_css_to_html_mapping'] : FALSE,
+    ),
+    'add_allowed_media_type' => array(
+      '#type' => 'textfield',
+      '#maxlength' => 1024,
+      '#title' => t('Add allowed media types'),
+      '#description' => t('By default, Emogrifier will keep only media types all, screen and print. If you want to keep some others, you can use this method to define them. Enter a comma separated list of media types.'),
+      '#default_value' => isset($filter->settings['add_allowed_media_type']) ? $filter->settings['add_allowed_media_type'] : '',
+    ),
+    'remove_allowed_media_type' => array(
+      '#type' => 'checkboxes',
+      '#title' => t('Remove allowed media types'),
+      '#description' => t('Remove default media types media types that Emogrifier keeps.'),
+      '#options' => array('all' => 'All', 'screen' => 'Screen', 'print' => 'Print'),
+      '#default_value' => isset($filter->settings['remove_allowed_media_type']) ? $filter->settings['remove_allowed_media_type'] : array(),
+    ),
+    'add_excluded_selector' => array(
+      '#type' => 'textfield',
+      '#maxlength' => 1024,
+      '#title' => t('Add excluded selectors'),
+      '#description' => t('Keeps elements from being affected by emogrification. Enter a comma separated list of selectors.'),
+      '#default_value' => isset($filter->settings['add_excluded_selector']) ? $filter->settings['add_excluded_selector'] : '',
+    ),
+    'external_css' => array(
+      '#type' => 'textarea',
+      '#title' => t('Relative CSS paths to be included. One file path per line.'),
+      '#description' => t('For example: sites/all/themes/my_theme/css/mail.css'),
+      '#default_value' => isset($filter->settings['external_css']) ? $filter->settings['external_css'] : '',
+    ),
+    'inline_css' => array(
+      '#type' => 'textarea',
+      '#title' => t('Inline CSS to be included.'),
+      '#description' => t('Do not add &lt;style&gt; tags.'),
+      '#default_value' => isset($filter->settings['inline_css']) ? $filter->settings['inline_css'] : "",
+    ),
+  );
 }
 
 /**

@@ -34,7 +34,7 @@ function emogrifier_requirements($phase) {
       'description' => (
         $emogrifier
         ? $t('The <a href="!help">%emogrifier</a> class library was found.', $args)
-        : $t('The <a href="!help">%emogrifier</a> class library was not found.', $args)
+        : $t('The <a href="!help">%emogrifier</a> class library was not found. Usually it is expected in sites/all/libraries/emogrifier/Classes/Emogrifier.php', $args)
       ),
       'severity' => ($emogrifier ? REQUIREMENT_OK : REQUIREMENT_WARNING),
     ),
