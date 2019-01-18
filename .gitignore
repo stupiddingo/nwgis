@@ -4,12 +4,3 @@ sites/*/settings*.php
 # Ignore paths that contain user-generated content.
 sites/*/files
 sites/*/private
-
-# Ignore additional files
-.idea
-.ftpquota
-maldet.txt
-
-# Ignore devel files
-sites/all/modules/devel
-sites/all/modules/contrib/devel
