@@ -224,7 +224,8 @@ class UserRestrictions {
     if (!empty($this->urid)) {
       $primary_keys[] = 'urid';
     }
-    
-    return drupal_write_record('user_restrictions', clone $this, $primary_keys);
+
+    $record = clone $this;
+    return drupal_write_record('user_restrictions', $record, $primary_keys);
   }
 }
